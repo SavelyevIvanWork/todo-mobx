@@ -1,5 +1,7 @@
 import styled from 'styled-components'
 import {Draggable} from "react-beautiful-dnd";
+import {observer} from "mobx-react-lite";
+
 
 const Container = styled.div`
   margin: 5px;
@@ -30,7 +32,9 @@ const Content = styled.p`
 `;
 
 
-const Task = ({task, index}) => {
+const Task = observer(({task, index}) => {
+    const {id, title, content} = task
+
     return (
         <Draggable draggableId={task.id} index={index}>
             {(provided, snapshot) => (
@@ -41,10 +45,10 @@ const Task = ({task, index}) => {
                     isDragging={snapshot.isDragging}
                 >
                     <Title>
-                        {task.title}
+                        {title}
                     </Title>
                     <Content>
-                        {task.content}
+                        {content}
                     </Content>
 
                     {provided.placeholder}
@@ -52,6 +56,6 @@ const Task = ({task, index}) => {
             )}
         </Draggable>
     )
-}
+})
 
 export default Task

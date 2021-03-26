@@ -1,9 +1,10 @@
-import {useDispatch, useSelector} from "react-redux";
 import {DragDropContext, Droppable} from "react-beautiful-dnd";
 import Column from "./components/Column/Column";
-import {dragStart, dragUpdate, updateCard, updateColumn} from "./reducers/dashboardReducer/actions";
 import styled from 'styled-components'
 import React from "react";
+import {observer} from "mobx-react-lite";
+import {StoreContext} from "./index";
+import {useContext} from "react";
 
 const Container = styled.div`
   position: relative;
@@ -11,17 +12,15 @@ const Container = styled.div`
   align-items: flex-start;
   background-color: ${props => (props.isDraggingOver ? 'red' : 'white')};
 `
-
-function App() {
-    const {columns, columnOrder, tasks} = useSelector(state => state.dashboardReducer)
-    const dispatch = useDispatch()
-
+const App = observer(() => {
+    const store = useContext(StoreContext)
     const onDragStart = start => {
-        dispatch(dragStart(start))
+        store.dragStart(start)
     }
+    const {columnOrder, tasks} = store
 
     const onDragUpdate = update => {
-        dispatch(dragUpdate(update))
+        store.dragUpdate(update)
     }
 
     const onDragEnd = result => {
@@ -39,37 +38,39 @@ function App() {
             return
         }
         if (result.type === 'column') {
-            return dispatch(updateColumn(result))
+            return store.updateColumn(result)
         }
 
         if (result.type === 'card') {
-            return dispatch(updateCard(result))
+            return store.updateCard(result)
         }
-
     }
-    return (
-        <DragDropContext onDragStart={onDragStart} onDragUpdate={onDragUpdate} onDragEnd={onDragEnd}>
-            <Droppable droppableId={'all-columns'} direction='horizontal' type={'column'}>
-                {(provided, snapshot) => (
-                    <Container
-                        {...provided.droppableProps}
-                        ref={provided.innerRef}
-                        isDraggingOver={snapshot.isDraggingOver}
-                    >
-                        {columnOrder.map((columnId, index) => {
-                            const column = columns[columnId]
-                            const columnTasks = column.taskIds.map(
-                                taskId => tasks[taskId],
-                            )
-                            return <Column key={column.id} column={column} tasks={columnTasks} index={index}/>
-                        })}
-                        {provided.placeholder}
-                    </Container>
-                )}
 
-            </Droppable>
-        </DragDropContext>
+    return (
+            <DragDropContext onDragStart={onDragStart} onDragUpdate={onDragUpdate} onDragEnd={onDragEnd}>
+                <Droppable droppableId={'all-columns'} direction='horizontal' type={'column'}>
+                    {(provided, snapshot) => (
+                        <Container
+                            {...provided.droppableProps}
+                            ref={provided.innerRef}
+                            isDraggingOver={snapshot.isDraggingOver}
+                        >
+                            {columnOrder.map((columnId, index) => {
+                                const column = store.columns[columnId]
+                                console.log('Column', column)
+                                const columnTasks = column.taskIds.map(
+                                    taskId => tasks[taskId],
+                                )
+                                return <Column key={column.id} column={column} tasks={columnTasks} index={index}
+                                />
+                            })}
+                            {provided.placeholder}
+                        </Container>
+                    )}
+
+                </Droppable>
+            </DragDropContext>
     )
-}
+})
 
 export default App

@@ -1,14 +1,9 @@
 import styled from "styled-components";
-import {useDispatch, useSelector} from "react-redux";
-import {
-    addTask,
-    closedPopUp,
-    getPopUp,
-    updateNewTask,
-    updateNewTaskContent, updateNewTaskTitle
-} from "../../reducers/dashboardReducer/actions";
 import {useRef} from "react";
 import useOutsideClick from "@rooks/use-outside-click";
+import {observer} from "mobx-react-lite";
+import {StoreContext} from "../../index";
+import {useContext} from "react";
 
 
 const Container = styled.div`
@@ -52,52 +47,52 @@ const Button = styled.button`
 `
 
 
-const PopUp = ({columnId, newTask}) => {
-    const dispatch = useDispatch()
+const PopUp = observer(({columnId, newTask}) => {
+    const {title, content} = newTask
+    const store = useContext(StoreContext)
     const containerRef = useRef(null)
 
     function outsidePClick() {
-        dispatch(closedPopUp(columnId))
+        store.closedPopUp(columnId)
     }
     useOutsideClick(containerRef, outsidePClick);
 
     const updateNewTaskTitleHandler = (e) => {
         const newTitle = e.target.value
-        dispatch(updateNewTaskTitle(newTitle, columnId))
+        store.updateNewTaskTitle(newTitle, columnId)
     }
 
     const updateNewTaskContentHandler = (e) => {
         const text = e.target.value
-        dispatch(updateNewTaskContent(text, columnId))
+        store.updateNewTaskContent(text, columnId)
     }
 
     const addTaskHandler = (e) => {
         e.stopPropagation()
-        dispatch(addTask(newTask.title, newTask.content, columnId))
+        store.addTask(title, content, columnId)
     }
-
 
     return (
         <Container
             ref={containerRef}
         >
             <Title
-                value={newTask.title}
+                value={title}
                 onChange={(e) => updateNewTaskTitleHandler(e)}
             >
-                {newTask.title}
+                {title}
             </Title>
             <Textarea
                 placeholder='Add a new task!'
-                value={newTask.content}
+                value={content}
                 onChange={(e) => updateNewTaskContentHandler(e)}
             >
-                {newTask.content}
+                {content}
             </Textarea>
             <Button onClick={(e) => addTaskHandler(e)}
             >Save</Button>
         </Container>
     )
-}
+})
 
 export default PopUp

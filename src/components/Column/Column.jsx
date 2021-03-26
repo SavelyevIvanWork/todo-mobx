@@ -2,13 +2,14 @@ import React from 'react'
 import Task from "../Task";
 import styled from 'styled-components'
 import {Droppable, Draggable} from "react-beautiful-dnd";
-import {useDispatch, useSelector} from "react-redux";
-import {clickTitle, getHeightColumn, getPopUp} from "../../reducers/dashboardReducer/actions";
 import PopUp from "../PopUp/PopUp";
 import ModifyInput from "../ModifyInput/ModifyInput";
 import {useRef} from "react";
 import {useLayoutEffect} from "react";
-import {useEffect} from "react";
+import {useContext} from "react";
+import {StoreContext} from "../../index";
+import {observer} from "mobx-react-lite";
+import {v4 as uuidv4} from "uuid";
 
 const Container = styled.div`
   display: flex;
@@ -91,27 +92,32 @@ const Button = styled.button`
   outline: none;
 `
 
-const Column = ({column, tasks, index}) => {
-    const dispatch = useDispatch()
-    const {dragStart, columnOrder, columns} = useSelector(state => state.dashboardReducer)
+const Column = observer (({column, tasks, index}) => {
+    const store = useContext(StoreContext)
     const containerRef = useRef(null)
+    const columnHeight = column.height
+    const columnTaskIds = column.taskIds
+    const {id, title, popUp, newTitleContent} = column
+    console.log('Rerender')
+
 
     useLayoutEffect(() => {
-        const columnHeight = containerRef.current.clientHeight
-        const columnWidth = containerRef.current.clientWidth
-        dispatch(getHeightColumn(column.id, columnWidth, columnHeight))
-    }, [dispatch, column.id, column.height, columnOrder, column.taskIds])
+        const height = containerRef.current.clientHeight
+        const width = containerRef.current.clientWidth
+        store.getHeightColumn(id, width, height)
+    }, [id, columnHeight, store, columnTaskIds])
 
 
     const titleColumnClickHandler = (e) => {
         const titleId = e.target.id
-        dispatch(clickTitle(titleId, column.id))
+        store.clickTitle(titleId, id)
     }
 
 
+
     return (<>
-            {<ShadowWrapper columnHeight={column.height} columnWidth={column.width}></ShadowWrapper>}
-            <Draggable draggableId={column.id} index={index}>
+            {<ShadowWrapper columnHeight={store.columns[id].height} columnWidth={store.columns[id].width}></ShadowWrapper>}
+            <Draggable draggableId={id} index={index}>
                 {(provided, snapshot) => (
                     <Wrapper ref={containerRef}>
                         <Container
@@ -120,17 +126,17 @@ const Column = ({column, tasks, index}) => {
                             isDragging={snapshot.isDragging}
                         >
                             {
-                                column.title.checked ?
-                                    <ModifyInput newTitleContent={column.newTitleContent} columnId={column.id}/>
+                                title.checked ?
+                                    <ModifyInput newTitleContent={newTitleContent} columnId={id}/>
                                     : <Title
                                         {...provided.dragHandleProps}
-                                        id={column.title.id}
+                                        id={store.columns[id].title.id}
                                         onClick={(e) => titleColumnClickHandler(e)}
                                     >
-                                        {column.title.content}
+                                        {store.columns[id].title.content}
                                     </Title>
                             }
-                            <Droppable droppableId={column.id} direction='vertical' type='card'>
+                            <Droppable droppableId={id} direction='vertical' type='card'>
                                 {(provided, snapshot) => {
                                     return (
                                         <>
@@ -147,9 +153,9 @@ const Column = ({column, tasks, index}) => {
                                                 {provided.placeholder}
                                             </TaskList>
                                             {
-                                                column.popUp ? <PopUp columnId={column.id} newTask={column.newTask}/>
+                                                popUp ? <PopUp columnId={id} newTask={store.columns[id].newTask}/>
                                                     : <ButtonWrapper>
-                                                        <Button onClick={() => dispatch(getPopUp(column.id))}>
+                                                        <Button onClick={() => store.getPopUp(id)}>
                                                             Add task
                                                         </Button>
                                                     </ButtonWrapper>
@@ -161,13 +167,10 @@ const Column = ({column, tasks, index}) => {
                             </Droppable>
                         </Container>
                     </Wrapper>
-
                 )}
-
             </Draggable>
-
         </>
     )
-}
+})
 
 export default Column

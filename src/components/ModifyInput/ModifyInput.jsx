@@ -1,13 +1,9 @@
 import styled from 'styled-components'
-import {useDispatch} from "react-redux";
-import {
-    closedModifyInput, closedPopUp,
-    updateColumnNewTitle,
-    updateColumnTitle,
-    updateNewTaskTitle
-} from "../../reducers/dashboardReducer/actions";
 import {useRef} from "react";
 import useOutsideClick from "@rooks/use-outside-click";
+import {observer} from "mobx-react-lite";
+import {StoreContext} from "../../index";
+import {useContext} from "react";
 
 const Input = styled.input`
   margin: 0;
@@ -23,24 +19,24 @@ const Input = styled.input`
 `
 
 const ModifyInput = ({newTitleContent, columnId}) => {
-    const dispatch = useDispatch()
     const inputRef = useRef()
+    const store = useContext(StoreContext)
 
     function outsidePClick() {
-        dispatch(closedPopUp(columnId))
+        store.closedPopUp(columnId)
     }
 
     useOutsideClick(inputRef, outsidePClick);
 
     const inputChangeHandler = (e) => {
         const newTitle = e.target.value
-        dispatch(updateColumnNewTitle(newTitle, columnId))
+        store.updateColumnNewTitle(newTitle, columnId)
     }
 
     const updateColumnTitleHandler = (e) => {
         if (e.key === 'Enter') {
             const newTitle = e.target.value
-            dispatch(updateColumnTitle(newTitle, columnId))
+            store.updateColumnTitle(newTitle, columnId)
         }
     }
 
@@ -51,9 +47,9 @@ const ModifyInput = ({newTitleContent, columnId}) => {
             autoFocus={true}
             onChange={(e) => inputChangeHandler(e)}
             onKeyDown={(e) => updateColumnTitleHandler(e)}
-            onBlur={() => dispatch(closedModifyInput(columnId))}
+            onBlur={() => store.closedModifyInput(columnId)}
         />
     )
 }
 
-export default ModifyInput
+export default observer(ModifyInput)
